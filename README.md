@@ -1,7 +1,6 @@
 # The Ultimate Guide to Building with Claude Code -- Companion Repo
 
 [The Ultimate Guide to Building with Claude Code](https://benryan.com.au/blog/ultimate-guide-building-with-claude-code)
-<!-- TODO: Update URL when article is published -->
 
 ## What This Is
 
