@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "playwright-plus": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@ai-coding-labs/playwright-mcp-plus@latest",
+        "--project-isolation",
+        "--caps=vision"
+      ]
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/supabase-mcp@latest",
+        "--project-ref",
+        "your-project-ref",
+        "--access-token",
+        "your-access-token"
+      ]
+    }
+  }
+}

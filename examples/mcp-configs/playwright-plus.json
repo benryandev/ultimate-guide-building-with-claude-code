@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "playwright-plus": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@ai-coding-labs/playwright-mcp-plus@latest",
+        "--project-isolation",
+        "--caps=vision"
+      ]
+    }
+  }
+}
