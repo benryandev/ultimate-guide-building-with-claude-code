@@ -71,3 +71,15 @@ Context is a finite resource. Every token matters.
 - **Compaction** preserves essentials. Tell Claude what to keep (see Compaction section above).
 - `/clear` between unrelated tasks. Clean session with good prompt beats long session with accumulated corrections.
 - **Course-correct early.** After 2 failed corrections, `/clear` and start fresh.
+
+## Orchestration
+
+### Agent Teams
+- **Context injection:** Teammates start with amnesia. Always inject project libraries, patterns, constraints, and relevant file paths into spawn prompts. Never assume teammates know the codebase.
+- **File ownership:** Assign each teammate to non-overlapping file/directory paths. Two teammates writing to the same file causes conflicts and lost work.
+- **Task sizing:** 5-6 tasks per teammate is the sweet spot. Fewer underutilizes parallelism; more causes context overload.
+- **Shutdown protocol:** Always clean up Agent Teams through the Lead agent. Never kill tmux panes directly -- the Lead must send shutdown requests so teammates can save state.
+
+### Subagents
+- **Strategy defaults:** Use parallel subagents for independent tasks (searching, file analysis). Use sequential subagents for debugging (each step depends on prior findings).
+- **Background execution:** Use `run_in_background` for test suites, builds, and large codebase searches. Keep the main thread free for interactive work.
