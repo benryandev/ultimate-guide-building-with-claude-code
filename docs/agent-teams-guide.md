@@ -177,6 +177,7 @@ Agent Teams is experimental, and these constraints bite in practice:
 - **The lead is fixed** for the session and cannot be transferred.
 - **Permissions are set at spawn.** All teammates start with the lead's permission mode.
 - **Split panes need tmux or iTerm2** -- unsupported in VS Code's integrated terminal, Windows Terminal, and Ghostty.
+- **Split-pane teammates outlive the lead.** They are separate processes, so a session that ends uncleanly leaves them running and idle indefinitely, with no warning. In practice this is the limitation that bites hardest: one swarm here accumulated 24 idle teammates, the oldest running for two days and twenty hours, left over from a phase that had long since finished. In-process teammates cannot do this -- they live inside the lead's process and die with it, which is the strongest argument for the default display mode. If you use split panes anyway, see [`examples/hooks/swarm-cleanup.sh`](../examples/hooks/swarm-cleanup.sh).
 
 ## When to Use Agent Teams vs Single-Threaded
 

@@ -77,6 +77,15 @@ originally written, not merely stale.
 - Context engineering rules 8 and 9: effort levels and per-job model selection.
 - An Agent Teams limitations section.
 
+### Added later the same day
+
+- **The orphaned-swarm failure mode**, documented in `agent-teams-guide.md` and
+  addressed by `examples/hooks/swarm-cleanup.sh`. Split-pane teammates are separate
+  processes that survive an unclean lead exit and idle indefinitely; a real swarm
+  accumulated 24 idle teammates over nearly three days before anyone noticed.
+  In-process teammates cannot orphan, which is the strongest argument for the
+  default display mode.
+
 ### Changed
 
 - `examples/global-config/global-claude.md` slimmed from 85 to 53 lines by moving
