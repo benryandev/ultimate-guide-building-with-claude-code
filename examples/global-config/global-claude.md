@@ -13,11 +13,13 @@
 - Private repos by default when creating GitHub repos (`gh repo create --private`).
 
 ## Model Preferences
-- Agent Team lead: always Opus
-- Agent Team teammates: Sonnet by default
-- Escalate teammates to Opus for: complex architecture, security-critical code, performance-sensitive implementations, intricate animation choreography, tasks requiring deep cross-codebase reasoning
-- Subagent model for read-only exploration: Haiku (fast, cheap)
-- Subagent model for code changes: Sonnet (default) or Opus (complex)
+- Agent Team lead: Opus 5
+- Agent Team teammates: Sonnet 5 by default
+- Escalate teammates to Opus 5 for: complex architecture, security-critical code, performance-sensitive implementations, intricate animation choreography, tasks requiring deep cross-codebase reasoning
+- Escalate to Fable 5 for: long autonomous sessions, ambiguous root-cause investigation, work I'd otherwise split across several sittings
+- Subagent for read-only exploration: Haiku 4.5 (fast, cheap)
+- Subagent for code changes: Sonnet 5 (default) or Opus 5 (complex)
+- Name teammate models in the spawn prompt -- `teammateDefaultModel` was removed in v2.1.234
 
 ## Session Management
 - Use `/clear` between unrelated tasks
@@ -28,58 +30,24 @@
 ## Compaction
 When compacting, always preserve:
 - All modified files and their purpose
-- Current task or project phase
+- Current GSD phase/task
 - Test/build commands and last results
 - Design review feedback and scores
 - Architectural decisions made this session
 
-## Memory Hierarchy
-
-Claude Code loads memory in layers. Understanding the cost of each layer prevents context waste.
-
-| Layer | Location | Loaded | Cost |
-|-------|----------|--------|------|
-| Global | `~/.claude/CLAUDE.md` | Every session | Always in context |
-| Global Rules | `~/.claude/rules/*.md` | Every session | Always in context (bug: no path filtering) |
-| Project | `./CLAUDE.md` | Every project session | Always in context |
-| Project Rules | `.claude/rules/*.md` | Every project session | Always in context |
-| Project Local | `./CLAUDE.local.md` | Every project session | Always in context (gitignored) |
-| Child Directory | `./packages/foo/CLAUDE.md` | On demand | Only when Claude reads files in that dir |
-| Auto Memory | `~/.claude/projects/<id>/memory/` | First 200 lines | Partial, per session |
-| Skills | `.claude/skills/<name>/SKILL.md` | Description at start; full on invoke | ~1 line per skill at start |
-
-**Principle:** CLAUDE.md = always-on (expensive). Skills = on-demand (cheap). Put always-needed rules in CLAUDE.md. Put reference material in skills.
-
-## Model Selection Strategy
-
-| Role | Model | When |
-|------|-------|------|
-| Team Lead | Opus (always) | Coordination, synthesis, complex decomposition |
-| Teammate (default) | Sonnet | Standard implementation tasks |
-| Teammate (escalated) | Opus | Complex architecture, security-critical, performance-sensitive, intricate animation, deep cross-codebase reasoning |
-| Subagent (read-only) | Haiku | File search, codebase exploration |
-| Subagent (code changes) | Sonnet (default) or Opus (complex) | Implementation or refactoring |
-
-## Context Engineering
-
-Context is a finite resource. Every token matters.
-
-- **CLAUDE.md** = always-on context. Only put things here that must apply to every interaction.
-- **Skills** = on-demand context. Descriptions load every session (~1 line). Full content on invocation only.
-- **Subagents** = isolated context. Exploration in a separate window; only a summary returns.
-- **Agent Teams** = parallel isolated contexts. Each teammate has its own window.
-- **Compaction** preserves essentials. Tell Claude what to keep (see Compaction section above).
-- `/clear` between unrelated tasks. Clean session with good prompt beats long session with accumulated corrections.
-- **Course-correct early.** After 2 failed corrections, `/clear` and start fresh.
-
 ## Orchestration
 
 ### Agent Teams
+- **Enablement:** experimental and off by default. `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set in `~/.claude/settings.json`.
 - **Context injection:** Teammates start with amnesia. Always inject project libraries, patterns, constraints, and relevant file paths into spawn prompts. Never assume teammates know the codebase.
 - **File ownership:** Assign each teammate to non-overlapping file/directory paths. Two teammates writing to the same file causes conflicts and lost work.
-- **Task sizing:** 5-6 tasks per teammate is the sweet spot. Fewer underutilizes parallelism; more causes context overload.
-- **Shutdown protocol:** Always clean up Agent Teams through the Lead agent. Never kill tmux panes directly -- the Lead must send shutdown requests so teammates can save state.
+- **Task sizing:** 5-6 tasks per teammate is the sweet spot. Start with 3-5 teammates -- three focused beats five scattered.
+- **Shutdown protocol:** Ask the Lead to shut teammates down so they can save state. Team directories clean up automatically when the session ends. Display mode defaults to in-process, so there are usually no tmux panes involved.
 
 ### Subagents
 - **Strategy defaults:** Use parallel subagents for independent tasks (searching, file analysis). Use sequential subagents for debugging (each step depends on prior findings).
+- **Forks:** Use `/subtask` when the side task needs this conversation's context -- a fork reuses the prompt cache and costs less than a fresh subagent.
 - **Background execution:** Use `run_in_background` for test suites, builds, and large codebase searches. Keep the main thread free for interactive work.
+
+## Reference
+Memory hierarchy, model pricing, effort levels, context engineering rules and parallelism trade-offs live in the `claude-code-reference` skill. Invoke it when auditing configuration rather than carrying the tables in always-on context.

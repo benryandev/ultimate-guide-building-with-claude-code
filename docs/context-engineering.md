@@ -8,7 +8,7 @@ Context engineering is the discipline of curating the information an AI agent re
 
 Every token matters. A bloated context does not just waste money -- it actively degrades performance. As context fills, Claude loses focus on earlier instructions, makes more mistakes, and becomes more likely to ignore rules. The relationship between context size and output quality is not linear: there is a point where adding more context makes things worse, not better.
 
-## The 7 Practical Rules
+## The 9 Practical Rules
 
 ### 1. CLAUDE.md is always-on context
 
@@ -18,9 +18,18 @@ Only put things here that must apply to every single interaction. Everything els
 
 Skill descriptions load every session (~1 line each). Full content loads only when invoked. Use skills for reference material, domain knowledge, and workflows. This is the most efficient way to give Claude access to detailed knowledge without paying the always-on cost.
 
-### 3. Sub-agents are isolated context
+### 3. Sub-agents are isolated context -- and forks are cheaper than you think
 
-When you need to read many files, run tests, or do research, use a sub-agent. The exploration happens in a separate context window and only a summary returns to your main conversation. This keeps your main context clean and focused.
+When you need to read many files, run tests, or do research, use a sub-agent. The exploration happens in a separate context window and only a summary returns to your main conversation.
+
+**Updated August 2026:** if the side task needs the *current* conversation, use a
+**fork** (`/subtask`) rather than a fresh sub-agent. A fork inherits the entire
+parent conversation, system prompt, tools and model, and because it reuses the
+prompt cache it costs *less* than spawning a clean sub-agent. Reach for a fresh
+`Explore` sub-agent only when a clean window is the actual goal.
+
+Sub-agent limits worth knowing: 3 levels of nesting, 20 concurrent, 200 spawned per
+session (`/clear` resets the budget).
 
 ### 4. Agent Teams are parallel isolated contexts
 
@@ -37,6 +46,32 @@ Do not let context accumulate across unrelated work. A clean session with a good
 ### 7. Course-correct early
 
 If Claude is going in the wrong direction, stop it immediately. After 2 failed correction attempts, clear the session and start fresh with a better prompt. The cost of a clean restart is always lower than the cost of a polluted context where Claude has accumulated incorrect assumptions.
+
+### 8. Match effort to the task
+
+Effort levels control how much the model reasons before acting: `low`, `medium`,
+`high`, `xhigh`, `max`. The default is `high` on every model that supports it. Set
+it with `/effort` or `--effort`.
+
+| Level | Use for |
+|-------|---------|
+| `low` | Mechanical edits, renames, formatting |
+| `medium` | Routine implementation against a clear spec |
+| `high` | Default. Most coding work |
+| `xhigh` | Architecture decisions, subtle debugging |
+| `max` | Deepest reasoning; session-scoped unless set via env var |
+
+`ultracode` is not an effort level -- it sends `xhigh` *and* has Claude orchestrate
+dynamic workflows for substantive tasks. It applies to the current session only.
+
+### 9. Pick the model per job
+
+| Model | Context | $/Mtok (in/out) | Use for |
+|-------|---------|-----------------|---------|
+| Fable 5 | 1M | $10 / $50 | Long autonomous sessions, ambiguous root-cause work |
+| Opus 5 | 1M | $5 / $25 | Default. Lead agent, complex architecture |
+| Sonnet 5 | 1M | $2 / $10 | Standard teammates, daily coding |
+| Haiku 4.5 | 200K | $1 / $5 | Read-only sub-agents, file search |
 
 ## Long-Horizon Task Strategies
 
@@ -83,9 +118,18 @@ When building custom tools, skills, and agents, follow these principles from Ant
 
 **Prefer fewer, richer tools over many thin ones:** Five well-documented tools outperform twenty poorly documented ones. Each additional tool description costs context tokens.
 
-**Use `@imports` strategically:** The `@path/to/file` syntax in CLAUDE.md lets you reference files without embedding them. Claude reads the referenced file when it determines it is relevant.
+**Do not use `@imports` as a context-saving device:** this guide previously claimed
+Claude reads an imported file "when it determines it is relevant". That is wrong.
+Imported files are expanded and loaded into context **at launch**, alongside the
+CLAUDE.md that references them. Imports are an organisational tool, not a budget
+tool. To actually defer loading, use a skill or a path-scoped rule.
 
-**Audit your global rules:** Global rules load every session across every project. If a rule only applies to one project type, it should be a project rule instead. Minimise what loads globally.
+**Audit your global rules:** Global rules load every session across every project. If a rule only applies to one project type, scope it with `paths:` frontmatter or make it a project rule. Minimise what loads globally.
+
+**Know when context is the wrong tool entirely:** CLAUDE.md is delivered as context,
+not enforced configuration, so compliance is likely but never guaranteed. If
+something must happen at a fixed point every time, use a **hook**. See
+`docs/hooks.md`.
 
 ## The Context Budget Mental Model
 
@@ -104,6 +148,8 @@ The conversation history grows over time and eventually triggers compaction. You
 
 ## Further Reading
 
-- See `docs/memory-hierarchy.md` for the 8-layer memory system
+- See `docs/memory-hierarchy.md` for the 10-layer memory system
 - See `docs/skills-strategy.md` for skills as on-demand context
 - See `docs/agent-teams-guide.md` for parallel isolated contexts
+- See `docs/subagents-and-workflows.md` for choosing a parallelism primitive
+- See `docs/hooks.md` for enforcement rather than suggestion

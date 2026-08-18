@@ -60,7 +60,7 @@ The most powerful pattern is **orchestrator skills** that invoke other skills an
 generate-article (orchestrator skill)
   |-- Invokes: article-writer skill (multi-stage pipeline)
   |   +-- Delegates to sub-agents via Task tool
-  |-- Invokes: svg-generator skill
+  |-- Invokes: image-prompter skill
   +-- Invokes: seo-validator skill
 ```
 
@@ -128,5 +128,5 @@ Project skills (available to this project only):
 ## Further Reading
 
 - See `examples/skills/` for complete skill examples across different domains
-- See `docs/memory-hierarchy.md` for the full 8-layer memory system
+- See `docs/memory-hierarchy.md` for the full 10-layer memory system
 - See `docs/context-engineering.md` for broader context management principles

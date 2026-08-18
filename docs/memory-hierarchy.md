@@ -2,28 +2,49 @@
 
 Claude Code loads memory in layers. Each layer has different scope, visibility, and context cost. Understanding this hierarchy is the single most impactful thing you can do to improve Claude's performance across your projects.
 
-## The 8 Layers
+## The 10 Layers
 
-Claude Code's memory system has eight distinct layers, ordered from broadest scope to narrowest:
+Claude Code's memory system has ten distinct layers, ordered from broadest scope to narrowest.
+
+> **Updated August 2026.** This table previously listed eight layers. Two were missing: the managed-policy file (which existed all along) and path-scoped rules, which are a genuinely separate loading behaviour from unconditional rules.
 
 | Layer | Location | When Loaded | Audience | Use For |
 |-------|----------|-------------|----------|---------|
+| **Managed policy** | `/Library/Application Support/ClaudeCode/CLAUDE.md` | Every session, every project | Whole organisation | IT-deployed standards. Cannot be excluded by user settings |
 | **Global** | `~/.claude/CLAUDE.md` | Every session, every project | You only | Personal identity, cross-project preferences, model preferences |
 | **Global Rules** | `~/.claude/rules/*.md` | Every session, every project | You only | Modular cross-project rules (e.g., `nextjs.md`, `git.md`) |
 | **Project** | `./CLAUDE.md` or `.claude/CLAUDE.md` | Every session in this project | Team (git) | Project-specific stack, commands, architecture, conventions |
-| **Project Rules** | `.claude/rules/*.md` | Every session in this project | Team (git) | File-type-specific rules scoped via frontmatter |
+| **Project Rules** | `.claude/rules/*.md` | Every session in this project | Team (git) | Rules with no `paths:` frontmatter -- always loaded |
+| **Path-scoped Rules** | `.claude/rules/*.md` with `paths:` | Only when Claude reads a matching file | Team (git) | File-type-specific rules |
 | **Project Local** | `./CLAUDE.local.md` | Every session in this project | You only (.gitignored) | Personal overrides, sandbox URLs, environment notes |
 | **Child Directory** | `./packages/foo/CLAUDE.md` | On demand (when Claude reads files in that directory) | Team (git) | Package-specific rules in monorepos |
-| **Auto Memory** | `~/.claude/projects/<id>/memory/` | First 200 lines per session | Auto (Claude writes) | Claude's own notes, debugging insights, pattern learnings |
+| **Auto Memory** | `~/.claude/projects/<id>/memory/MEMORY.md` | First 200 lines **or** 25KB, whichever comes first | Auto (Claude writes) | Claude's own notes, debugging insights, pattern learnings |
 | **Skills** | `.claude/skills/<name>/SKILL.md` | Description at session start; full content on invocation | Team (git) | On-demand domain knowledge, workflows, reference material |
 
 ## Cost Implications
 
 The critical distinction is between **always-on** and **on-demand** context:
 
-- **Always-on layers** (Global, Global Rules, Project, Project Rules, Project Local) load every session. Every line consumes tokens whether Claude needs it or not.
-- **On-demand layers** (Child Directory, Skills) load only when triggered. A skill description costs roughly one line per session -- the full content loads only when invoked.
-- **Auto Memory** is a hybrid: the first 200 lines load automatically, but Claude controls what goes there.
+- **Always-on layers** (Managed policy, Global, Global Rules, Project, Project Rules, Project Local) load every session. Every line consumes tokens whether Claude needs it or not.
+- **On-demand layers** (Path-scoped Rules, Child Directory, Skills) load only when triggered. A skill description costs roughly one line per session -- the full content loads only when invoked.
+- **Auto Memory** is a hybrid: the first 200 lines or 25KB load automatically, but Claude controls what goes there.
+
+### Rules gotchas worth knowing
+
+Path scoping works. The much-cited bug where `paths:`-scoped rules loaded globally
+([issue #16299](https://github.com/anthropics/claude-code/issues/16299)) was fixed
+around v2.1.63. You can verify it yourself: open a session that touches none of the
+scoped file types and run `/context` -- the scoped rules should be absent.
+
+The issue is still open for two narrower traps, and both are easy to hit:
+
+1. **Discovery is recursive, and unscoped files always load.** Every `.md` under
+   `.claude/rules/` loads at launch unless it carries its own `paths:` frontmatter.
+   Reference material parked in a `refs/` subdirectory for "progressive disclosure"
+   loads globally. One team reported 75 such files entering context every session.
+2. **`@`-imports inside a rule load unconditionally.** An import in a path-scoped
+   rule enters context even when the rule never matches. Avoid imports in rules --
+   duplicate the handful of lines instead.
 
 This means a 100-line CLAUDE.md costs 100 lines of context every single session. A 100-line skill costs approximately one line per session plus the full 100 lines only when invoked. For reference material that Claude needs occasionally, skills are dramatically more efficient.
 
@@ -31,17 +52,33 @@ This means a 100-line CLAUDE.md costs 100 lines of context every single session.
 
 These rules apply to any CLAUDE.md file but are most critical for global and project-level files since they load every session.
 
-### 1. Keep it under 500 lines
+### 1. Keep it under 200 lines
 
-Bloated CLAUDE.md files cause Claude to lose focus on your instructions. If Claude keeps doing something you have a rule against, the file is probably too long. Shorter files mean each instruction gets more attention.
+Anthropic's published guidance is to target **under 200 lines per CLAUDE.md file**;
+longer files consume more context and measurably reduce adherence. (This guide
+previously said 500 lines, which was my own guess and too generous.)
+
+If Claude keeps doing something you have a rule against, the file is probably too
+long. `/doctor` proposes trims for a checked-in CLAUDE.md: it cuts what Claude can
+derive from the codebase -- directory layouts, dependency lists, architecture
+overviews -- and keeps the pitfalls, rationale, and conventions that differ from
+tool defaults.
 
 ### 2. Only include what Claude cannot infer from code
 
 Do not document standard language conventions, obvious project structure, or things Claude already knows. Do document build commands, unusual patterns, and project-specific decisions that would otherwise require guessing.
 
-### 3. Use `@path/to/file` imports for shared docs
+### 3. Use `@path/to/file` imports for organisation, not for savings
 
-Do not paste your README into CLAUDE.md. Instead, use imports: `See @README.md for project overview`. This keeps CLAUDE.md focused and avoids duplication.
+Do not paste your README into CLAUDE.md. Use imports instead:
+`See @README.md for project overview`.
+
+**But be clear about what this buys you.** Imported files are expanded and loaded
+into context *at launch*, alongside the CLAUDE.md that references them. Imports keep
+files tidy and avoid duplication; they do **not** reduce context cost. Only skills
+and path-scoped rules do that. Imports resolve up to four hops deep, and an import
+whose path resolves outside the working directory triggers a one-time approval
+dialog.
 
 ### 4. Move domain knowledge to skills
 
@@ -124,3 +161,4 @@ Each layer adds specificity without bloating any single file. The design system 
 - See `examples/global-config/` for a complete global configuration example
 - See `examples/claude-md/` for project CLAUDE.md templates across different project types
 - See `examples/rules/` for path-scoped rule examples
+- See `docs/hooks.md` for enforcing what CLAUDE.md can only suggest
