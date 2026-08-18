@@ -35,13 +35,14 @@ originally written, not merely stale.
   on session exit, and in-process mode needs no session management.
 - **`teammateDefaultModel` removed in v2.1.234.** Name teammate models in the spawn
   prompt or set `CLAUDE_CODE_SUBAGENT_MODEL`. A leftover value is ignored.
-- **Model lineup replaced.** Fable 5 ($10/$50, 1M), Opus 5 ($5/$25, 1M, default),
+- **Model lineup replaced.** Fable 5 ($10/$50, 1M), Opus 5 ($5/$25, 1M, what `opus` resolves to),
   Sonnet 5 ($2/$10, 1M), Haiku 4.5 ($1/$5, 200K). Fable 5 is a genuinely new tier
   above Opus for long autonomous sessions.
 - **Auto memory limit.** Loads the first 200 lines **or 25KB**, whichever comes
   first -- not just the line count.
 - **Issue #16299 rescoped.** The headline bug (path-scoped rules loading globally)
-  was fixed around v2.1.63. The issue remains open for two narrower traps:
+  is no longer reproducible; see the fact-check note below on why no version is
+  cited. The issue remains open for two narrower traps:
   unscoped `.md` files anywhere under `.claude/rules/` load at launch and discovery
   is recursive; and `@`-imports inside a path-scoped rule load unconditionally.
 - **Subagent `skills:` and `mcpServers:` frontmatter is ignored when the definition
