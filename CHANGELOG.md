@@ -49,6 +49,19 @@ originally written, not merely stale.
   normal session.
 - **`svg-generator` renamed** to `image-prompter` in the content pipeline example.
 
+### Caught in the fact-check pass
+
+- **The 200-subagent-per-session spawn cap no longer exists.** It was removed in
+  v2.1.224; only the depth (3) and concurrency (20) limits still apply. The docs
+  page still listed it, so this was verified against the changelog instead --
+  a reminder that docs can lag releases.
+- **The #16299 fix is not pinned to a version.** Earlier drafts of this refresh
+  said "fixed around v2.1.63". No changelog entry supports that; the evidence is a
+  reporter's confirmation plus local observation. Reworded to say the behaviour is
+  no longer reproducible and to tell readers to verify with `/context`.
+- **Opus 5 is the default *Opus* model, not every account's default model.** The
+  `default` alias resolves to whatever is recommended for your account type.
+
 ### Added
 
 - `docs/plugins.md` -- packaging and distribution, marketplaces, build vs install.

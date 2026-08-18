@@ -32,8 +32,10 @@ The critical distinction is between **always-on** and **on-demand** context:
 ### Rules gotchas worth knowing
 
 Path scoping works. The much-cited bug where `paths:`-scoped rules loaded globally
-([issue #16299](https://github.com/anthropics/claude-code/issues/16299)) was fixed
-around v2.1.63. You can verify it yourself: open a session that touches none of the
+([issue #16299](https://github.com/anthropics/claude-code/issues/16299)) is no longer
+reproducible -- though no changelog entry pins the fix to a version, so treat the
+version number in any guide (including this one) as unverified. A reporter confirmed
+it working in v2.1.63. Verify it yourself: open a session that touches none of the
 scoped file types and run `/context` -- the scoped rules should be absent.
 
 The issue is still open for two narrower traps, and both are easy to hit:

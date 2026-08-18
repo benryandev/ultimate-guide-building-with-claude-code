@@ -36,8 +36,10 @@ CLAUDE.md files. `/context` shows which memory files actually loaded.
 ### Rules gotchas
 
 Path scoping works -- the original global-loading bug
-(<https://github.com/anthropics/claude-code/issues/16299>) was fixed around
-v2.1.63. Two narrower traps remain open:
+(<https://github.com/anthropics/claude-code/issues/16299>) is no longer
+reproducible. No changelog entry pins the fix to a version; a reporter confirmed it
+working in v2.1.63. Verify in your own setup with `/context`. Two narrower traps
+remain open:
 
 - Every `.md` under `.claude/rules/` loads at launch unless it carries its own
   `paths:` frontmatter, and discovery is **recursive**. Reference files parked in
@@ -56,7 +58,7 @@ touches a matching file. Instructions given only in conversation are lost.
 | Model | Alias | Context | $/Mtok (in/out) | Use for |
 |-------|-------|---------|-----------------|---------|
 | Fable 5 | `fable` | 1M | $10 / $50 | Long autonomous sessions, ambiguous root-cause work, tasks larger than one sitting |
-| Opus 5 | `opus` | 1M | $5 / $25 | Default. Team lead, complex architecture, security-critical code |
+| Opus 5 | `opus` | 1M | $5 / $25 | What `opus` resolves to. Team lead, complex architecture, security-critical code |
 | Sonnet 5 | `sonnet` | 1M | $2 / $10 | Standard teammates, daily coding |
 | Haiku 4.5 | `haiku` | 200K | $1 / $5 | Read-only subagents, file search, codebase exploration |
 
@@ -128,5 +130,5 @@ and subagent frontmatter.
 | Scale | A few per turn | A handful of peers | Dozens to hundreds per run |
 | Reach for it when | You need a focused answer | Agents must challenge each other | The same step repeats across many items |
 
-Subagent caps: 3 levels of nesting, 20 concurrent, 200 per session.
+Subagent caps: 3 levels of nesting, 20 concurrent. The 200-per-session spawn cap was removed in v2.1.224.
 Workflow caps: 16 concurrent agents, 1,000 agents per run.

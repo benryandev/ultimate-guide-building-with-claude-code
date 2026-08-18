@@ -28,8 +28,8 @@ parent conversation, system prompt, tools and model, and because it reuses the
 prompt cache it costs *less* than spawning a clean sub-agent. Reach for a fresh
 `Explore` sub-agent only when a clean window is the actual goal.
 
-Sub-agent limits worth knowing: 3 levels of nesting, 20 concurrent, 200 spawned per
-session (`/clear` resets the budget).
+Sub-agent limits worth knowing: 3 levels of nesting and 20 concurrent. The
+200-per-session spawn cap was removed in v2.1.224.
 
 ### 4. Agent Teams are parallel isolated contexts
 
@@ -69,7 +69,7 @@ dynamic workflows for substantive tasks. It applies to the current session only.
 | Model | Context | $/Mtok (in/out) | Use for |
 |-------|---------|-----------------|---------|
 | Fable 5 | 1M | $10 / $50 | Long autonomous sessions, ambiguous root-cause work |
-| Opus 5 | 1M | $5 / $25 | Default. Lead agent, complex architecture |
+| Opus 5 | 1M | $5 / $25 | What `opus` resolves to. Lead agent, complex architecture |
 | Sonnet 5 | 1M | $2 / $10 | Standard teammates, daily coding |
 | Haiku 4.5 | 200K | $1 / $5 | Read-only sub-agents, file search |
 

@@ -28,7 +28,7 @@ runs, log analysis, dependency audits, reading fifty files to answer one questio
 **Defaults worth knowing:**
 
 - Subagents run in the **background by default** in interactive sessions. Background subagents get a restricted tool set; foreground ones get the full set and block the conversation.
-- Caps: **3 levels of nesting**, **20 concurrent**, **200 spawned per session**. `/clear` resets the session budget.
+- Caps: **3 levels of nesting** and **20 concurrent**. The 200-per-session spawn cap was removed in v2.1.224, so long-running sessions no longer refuse new agents.
 - Two built-ins are worth using by name: **`Explore`** for read-only codebase search and **`Plan`** for research in plan mode. Both deliberately skip loading CLAUDE.md and the git status snapshot -- a file-search agent does not need your commit message conventions.
 
 Define custom ones in `.claude/agents/*.md`. See [`examples/agents/`](../examples/agents/).
