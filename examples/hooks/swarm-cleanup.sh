@@ -27,7 +27,15 @@ mkdir -p "$(dirname "$LOG")"
 
 log() { printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >>"$LOG"; }
 
-command -v tmux >/dev/null 2>&1 || exit 0
+# Hooks inherit a minimal PATH (often just /usr/bin:/bin:/usr/sbin:/sbin), so a
+# Homebrew tmux is invisible unless we go looking for it. Failing silently here is
+# exactly the bug this script exists to catch, so say so in the log.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+TMUX_BIN="$(command -v tmux 2>/dev/null || true)"
+if [ -z "$TMUX_BIN" ]; then
+  log "SKIP  tmux not found on PATH ($PATH) -- nothing to reap"
+  exit 0
+fi
 
 SOCKET_DIR="${TMUX_TMPDIR:-/private/tmp}/tmux-$(id -u)"
 [ -d "$SOCKET_DIR" ] || SOCKET_DIR="/tmp/tmux-$(id -u)"
@@ -61,17 +69,21 @@ for socket in "$SOCKET_DIR"/claude-swarm-*; do
     continue
   fi
 
-  panes=$(tmux -S "$socket" list-panes -a 2>/dev/null | wc -l | tr -d ' ')
+  panes=$("$TMUX_BIN" -S "$socket" list-panes -a 2>/dev/null | wc -l | tr -d ' ')
   if [ "$DRYRUN" = "1" ]; then
     log "DRYRUN would reap $name (owner $pid dead, ${age_h}h old, ${panes} panes)"
     continue
   fi
 
-  if tmux -S "$socket" kill-server 2>/dev/null; then
+  if "$TMUX_BIN" -S "$socket" kill-server 2>/dev/null; then
     log "REAPED $name (owner $pid dead, ${age_h}h old, ${panes} panes)"
     reaped=$((reaped + 1))
   else
-    log "FAIL  $name (kill-server returned non-zero)"
+    # kill-server also fails when the server is already gone and only the socket
+    # file is left behind. That is the common case, not an error -- removing the
+    # file below still does the useful work.
+    log "CLEARED $name (no server responding, stale socket file, ${age_h}h old)"
+    reaped=$((reaped + 1))
   fi
   rm -f "$socket" 2>/dev/null
 done
