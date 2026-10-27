@@ -5,7 +5,7 @@ description: Reference tables for Claude Code configuration -- the memory hierar
 
 # Claude Code Reference
 
-Verified against Claude Code v2.1.234, August 2026. These are lookup tables, not
+Verified against Claude Code v2.1.311, October 2026. These are lookup tables, not
 behavioural rules -- the always-on rules live in `~/.claude/CLAUDE.md`.
 
 ## Memory Hierarchy
@@ -15,16 +15,16 @@ context waste.
 
 | Layer | Location | Loaded | Cost |
 |-------|----------|--------|------|
-| Managed policy | `/Library/Application Support/ClaudeCode/CLAUDE.md` | Every session | Always on, cannot be excluded by user settings |
+| Managed policy | macOS `/Library/Application Support/ClaudeCode/CLAUDE.md`; Linux/WSL `/etc/claude-code/CLAUDE.md`; Windows `C:\Program Files\ClaudeCode\CLAUDE.md` | Every session | Always on, cannot be excluded by user settings |
 | User | `~/.claude/CLAUDE.md` | Every session | Always in context |
 | User rules | `~/.claude/rules/*.md` | Every session unless `paths:` scoped | Always in context |
 | Project | `./CLAUDE.md` or `./.claude/CLAUDE.md` | Every project session | Always in context |
 | Project rules | `.claude/rules/*.md` | Every project session | Always in context |
-| Path-scoped rules | `.claude/rules/*.md` with `paths:` frontmatter | When Claude reads a matching file | On demand |
+| Path-scoped rules | `.claude/rules/*.md` with `paths:` frontmatter | When Claude reads, writes or edits a matching file, or views it via Bash | On demand |
 | Project local | `./CLAUDE.local.md` | Every project session | Always in context (gitignored) |
-| Child directory | `./packages/foo/CLAUDE.md` | On demand | Only when Claude reads files in that dir |
+| Child directory | `./packages/foo/CLAUDE.md` | On demand | Only when Claude reads, writes or edits files in that dir |
 | Auto memory | `~/.claude/projects/<id>/memory/MEMORY.md` | First 200 lines **or** 25KB, whichever comes first | Partial, per session |
-| Skills | `.claude/skills/<name>/SKILL.md` | Description at start; full body on invoke | ~1 line per skill at start |
+| Skills | `.claude/skills/<name>/SKILL.md` | Description at start; full body on invoke | One description per skill at start (keep it short) |
 
 **Principle:** CLAUDE.md is always-on and expensive. Skills are on-demand and cheap.
 Put always-needed behavioural rules in CLAUDE.md; put reference material in skills.
@@ -57,32 +57,34 @@ touches a matching file. Instructions given only in conversation are lost.
 
 | Model | Alias | Context | $/Mtok (in/out) | Use for |
 |-------|-------|---------|-----------------|---------|
-| Fable 5 | `fable` | 1M | $10 / $50 | Long autonomous sessions, ambiguous root-cause work, tasks larger than one sitting |
-| Opus 5 | `opus` | 1M | $5 / $25 | What `opus` resolves to. Team lead, complex architecture, security-critical code |
-| Sonnet 5 | `sonnet` | 1M | $2 / $10 | Standard teammates, daily coding |
-| Haiku 4.5 | `haiku` | 200K | $1 / $5 | Read-only subagents, file search, codebase exploration |
+| Fable 5.1 | `fable` | 1M | $10 / $50 | Long autonomous sessions, ambiguous root-cause work, tasks larger than one sitting |
+| Opus 5.5 | `opus` | 1M | $4 / $20 | What `opus` resolves to. Team lead, complex architecture, security-critical code |
+| Sonnet 5.5 | `sonnet` | 1M | $2 / $10 | Standard teammates, daily coding |
+| Haiku 5.5 | `haiku` | 1M | $0.10 / $0.50 (rises to $0.50 / $2.50 over 100K tokens) | Read-only subagents, file search, codebase exploration |
 
 | Role | Model | When |
 |------|-------|------|
-| Team lead | Opus 5 | Coordination, synthesis, complex decomposition |
-| Teammate (default) | Sonnet 5 | Standard implementation tasks |
-| Teammate (escalated) | Opus 5 | Complex architecture, security-critical, performance-sensitive, intricate animation, deep cross-codebase reasoning |
-| Teammate (long-running) | Fable 5 | Work that would otherwise be split across sittings; needs self-verification |
-| Subagent (read-only) | Haiku 4.5 | File search, codebase exploration |
-| Subagent (code changes) | Sonnet 5, or Opus 5 when complex | Implementation or refactoring |
+| Team lead | Opus 5.5 | Coordination, synthesis, complex decomposition |
+| Teammate (default) | Sonnet 5.5 | Standard implementation tasks |
+| Teammate (escalated) | Opus 5.5 | Complex architecture, security-critical, performance-sensitive, intricate animation, deep cross-codebase reasoning |
+| Teammate (long-running) | Fable 5.1 | Work that would otherwise be split across sittings |
+| Subagent (read-only) | Haiku 5.5 | File search, codebase exploration |
+| Subagent (code changes) | Sonnet 5.5, or Opus 5.5 when complex | Implementation or refactoring |
 
 Teammate models are named in the spawn prompt. `teammateDefaultModel` was removed
-in v2.1.234; `CLAUDE_CODE_SUBAGENT_MODEL` still works. Unspecified teammates
-inherit the lead's model.
+in v2.1.234. A teammate's model resolves in this order: the spawn prompt, the agent
+definition's `model`, `CLAUDE_CODE_SUBAGENT_MODEL` (a default, not an override, since
+v2.1.251; `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` forces it), then the lead's model.
+`CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` (v2.1.296) pins every workflow agent to one model.
 
-With Fable 5: describe the outcome rather than the steps, hand it ambiguous
-problems, and skip the "remember to test this" reminders -- it verifies its own
-work without prompting.
+Fable 5, Opus 5, Sonnet 5 and Haiku 4.5 are now legacy (still available). The `best`
+alias is Fable 5.1 where available, otherwise Opus 5.5.
 
 ## Effort Levels
 
-`low`, `medium`, `high`, `xhigh`, `max`. Default is `high` on every model that
-supports effort. Set with `/effort` or `--effort`.
+`low`, `medium`, `high`, `xhigh`, `max`. Default is `high` on models that
+support effort, except Opus 5.5, Sonnet 5.5 and Haiku 5.5, which default to `medium`
+(Opus 4.7 defaults to `xhigh`). Set with `/effort` or `--effort`.
 
 | Level | Use for |
 |-------|---------|
@@ -92,15 +94,17 @@ supports effort. Set with `/effort` or `--effort`.
 | `xhigh` | Architecture decisions, subtle debugging |
 | `max` | Deepest reasoning; current session only unless set via env var |
 
-`ultracode` is not an effort level -- it sends `xhigh` and additionally has Claude
-orchestrate dynamic workflows for substantive tasks. Session-scoped.
+`ultracode` is not an effort level. Since v2.1.284 it is a separate toggle (Tab in the
+`/effort` slider, or `/effort ultracode on|off`) that has Claude orchestrate dynamic
+workflows at whichever effort level the session runs at. Only the `--effort ultracode`
+launch flag also sets `xhigh`.
 
 ## Context Engineering Rules
 
 Context is a finite resource. Every token competes for attention.
 
 1. **CLAUDE.md is always-on and expensive.** Only what applies to every interaction. Target under 200 lines.
-2. **Skills are on-demand and cheap.** Reference material, procedures, specialised knowledge. ~1 line each at startup.
+2. **Skills are on-demand and cheap.** Reference material, procedures, specialised knowledge. One short description each at startup.
 3. **Prefer forks over fresh subagents when context matters.** `/subtask` inherits the conversation and reuses the prompt cache, so it costs *less* than a clean subagent. Spawn a fresh `Explore` subagent only when a clean window is the point.
 4. **Agent Teams are parallel isolated contexts.** Each teammate has its own window; the lead coordinates via structured messages.
 5. **Tell Claude what to keep during compaction.** Specified in the Compaction section of CLAUDE.md.
@@ -114,8 +118,8 @@ Context is a finite resource. Every token competes for attention.
 CLAUDE.md is delivered as context, not enforced configuration -- compliance is
 likely but never guaranteed. If something must happen at a fixed point every
 time, use a **hook** instead. Exit code 2 blocks on `PreToolUse`,
-`UserPromptSubmit`, `Stop` and `SubagentStop`; it has no effect on post-action
-events like `PostToolUse`.
+`UserPromptSubmit`, `Stop` and `SubagentStop`; it cannot block post-action
+events like `PostToolUse` (stderr is still shown to Claude).
 
 Hooks are configured in `settings.json`, a plugin's `hooks/hooks.json`, or skill
 and subagent frontmatter.

@@ -2,13 +2,13 @@
 
 Companion repo for [Claude Code Best Practices: The Ultimate 2026 Guide](https://benryan.com.au/blog/ultimate-guide-building-with-claude-code).
 
-**Last verified against Claude Code v2.1.234 (August 2026).** See [CHANGELOG.md](CHANGELOG.md) for what changed in the August refresh, including four things the February version got wrong.
+**Last verified against Claude Code v2.1.311 (October 2026).** See the October entry in [CHANGELOG.md](CHANGELOG.md) for what changed since August, including six claims that were wrong when written.
 
 ## What This Is
 
 Real-world configuration files and deep-dive documentation drawn from production
-work: **65 phases and 280 plans** on a Next.js site build, plus a **30-phase content
-generation pipeline with 24 orchestrated skills**, and the meta-configuration of
+work: **115 phases and nearly 500 plans** across two projects (77 phases and 418 plans on a Next.js site build, and a 38-phase content
+generation pipeline with 26 orchestrated skills and 76 plans), and the meta-configuration of
 Claude Code itself.
 
 Everything here is designed to be copied, adapted, and used in your own projects.
@@ -69,7 +69,7 @@ frequently-ignored CLAUDE.md rule into a hook.
 
 Claude Code moves quickly, and configuration guidance rots faster than code does.
 Every document here carries what it was verified against. If you are reading this
-long after August 2026, check the current
+long after October 2026, check the current
 [Claude Code docs](https://code.claude.com/docs) before trusting a specific flag,
 default, or price.
 

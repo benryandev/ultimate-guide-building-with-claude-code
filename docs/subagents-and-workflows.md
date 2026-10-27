@@ -50,7 +50,7 @@ is now wrong for any task that actually needs the conversation's context.
 **Use a fork when:** the side task depends on what you have already discussed.
 **Use a fresh subagent when:** a clean context window is the actual point.
 
-Forks cannot spawn further forks, and they share the parent's permissions.
+Forks share the parent's permissions and count toward the 3-level depth cap.
 
 ## Workflows
 
@@ -81,14 +81,13 @@ each phase's agent count, token total and elapsed time. Press `p` to pause, `x` 
 stop, and `s` to save the run's script as a reusable `/command` in
 `.claude/workflows/` or `~/.claude/workflows/`.
 
-**Limits:** 16 concurrent agents, 1,000 agents per run, no mid-run user input, no
+**Limits:** 16 concurrent agents by default (lower on fewer CPUs; `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS`, 1-256, raises it), 1,000 agents per run, no mid-run user input, no
 filesystem or shell access from the script itself (the agents do that work). A
 `Large workflow` warning appears past 25 scheduled agents or 1.5M projected tokens.
 
 **Cost control:** set a size guideline in `/config` (`small` is fewer than 5 agents,
-`medium` fewer than 15, `large` fewer than 50; default is `medium`). Run on a narrow
-slice first to gauge spend. Every agent uses your session's model unless the script
-routes a stage elsewhere, so check `/model` before a large run.
+`medium` fewer than 10 (lowered from 15 in v2.1.271), `large` fewer than 50; the default is `small` when signed in on Pro). Run on a narrow
+slice first to gauge spend. Workflow agents resolve their model in the same order as teammates (spawn model, agent definition's `model`, `CLAUDE_CODE_SUBAGENT_MODEL`, then the session's model), and `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` (v2.1.296) pins every workflow agent to one model, so check `/model` before a large run.
 
 **A resume gotcha:** replay follows the order agents *started*. Cached results stop
 at the first agent that did not finish, and everything started after it runs again --

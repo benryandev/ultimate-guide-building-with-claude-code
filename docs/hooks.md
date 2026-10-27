@@ -20,7 +20,7 @@ gaps.
 
 ## Hook Events
 
-There are over 30 events. These are the ones worth knowing first:
+There are over 30 events (33 are listed in the docs). These are the ones worth knowing first:
 
 | Event | Fires When | Typical Use |
 |-------|-----------|-------------|
@@ -47,9 +47,11 @@ whether the event represents a preventable action:
 - `UserPromptSubmit` -- blocks prompt processing
 - `Stop` / `SubagentStop` -- prevents stopping, continues the conversation
 - `PostToolBatch` -- stops the agentic loop before the next model call
+- `TeammateIdle`, `TaskCreated`, `TaskCompleted`, `PreCompact`
+- `PreModelSwitch` (v2.1.251)
 - `ConfigChange`, `Elicitation`, `WorktreeCreate`
 
-**Has no effect** (the action already happened):
+**Cannot block** (the action already happened, but stderr is shown to Claude):
 - `PostToolUse`, `PostToolUseFailure`, `PermissionDenied`
 
 Any other non-zero exit without valid JSON is treated as a non-blocking error and

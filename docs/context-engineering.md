@@ -16,7 +16,7 @@ Only put things here that must apply to every single interaction. Everything els
 
 ### 2. Skills are on-demand context
 
-Skill descriptions load every session (~1 line each). Full content loads only when invoked. Use skills for reference material, domain knowledge, and workflows. This is the most efficient way to give Claude access to detailed knowledge without paying the always-on cost.
+Skill descriptions load every session (one description per skill, so keep it short). Full content loads only when invoked. Use skills for reference material, domain knowledge, and workflows. This is the most efficient way to give Claude access to detailed knowledge without paying the always-on cost.
 
 ### 3. Sub-agents are isolated context -- and forks are cheaper than you think
 
@@ -37,7 +37,7 @@ Each teammate has its own context window. Use Agent Teams when multiple investig
 
 ### 5. Compaction preserves the essentials
 
-When auto-compaction triggers (~95% context capacity), Claude summarises history and keeps the most important context. Tell Claude what to preserve by adding compaction instructions to your CLAUDE.md. Without guidance, Claude might discard information you need.
+When auto-compaction triggers, Claude summarises history and keeps the most important context. Tell Claude what to preserve by adding compaction instructions to your CLAUDE.md. Without guidance, Claude might discard information you need.
 
 ### 6. Clear between unrelated tasks
 
@@ -50,7 +50,7 @@ If Claude is going in the wrong direction, stop it immediately. After 2 failed c
 ### 8. Match effort to the task
 
 Effort levels control how much the model reasons before acting: `low`, `medium`,
-`high`, `xhigh`, `max`. The default is `high` on every model that supports it. Set
+`high`, `xhigh`, `max`. The default is `high` on models that support it, except Opus 5.5, Sonnet 5.5 and Haiku 5.5, which default to `medium` (Opus 4.7 defaults to `xhigh`). Set
 it with `/effort` or `--effort`.
 
 | Level | Use for |
@@ -61,17 +61,19 @@ it with `/effort` or `--effort`.
 | `xhigh` | Architecture decisions, subtle debugging |
 | `max` | Deepest reasoning; session-scoped unless set via env var |
 
-`ultracode` is not an effort level -- it sends `xhigh` *and* has Claude orchestrate
-dynamic workflows for substantive tasks. It applies to the current session only.
+`ultracode` is not an effort level. Since v2.1.284 it is a separate toggle (Tab in the
+`/effort` slider, or `/effort ultracode on|off`) that has Claude orchestrate dynamic
+workflows for substantive tasks at whichever effort level the session runs at. Only the
+`--effort ultracode` launch flag also sets `xhigh`.
 
 ### 9. Pick the model per job
 
 | Model | Context | $/Mtok (in/out) | Use for |
 |-------|---------|-----------------|---------|
-| Fable 5 | 1M | $10 / $50 | Long autonomous sessions, ambiguous root-cause work |
-| Opus 5 | 1M | $5 / $25 | What `opus` resolves to. Lead agent, complex architecture |
-| Sonnet 5 | 1M | $2 / $10 | Standard teammates, daily coding |
-| Haiku 4.5 | 200K | $1 / $5 | Read-only sub-agents, file search |
+| Fable 5.1 | 1M | $10 / $50 | Long autonomous sessions, ambiguous root-cause work |
+| Opus 5.5 | 1M | $4 / $20 | What `opus` resolves to. Lead agent, complex architecture |
+| Sonnet 5.5 | 1M | $2 / $10 | Standard teammates, daily coding |
+| Haiku 5.5 | 1M | $0.10 / $0.50 | Read-only sub-agents, file search |
 
 ## Long-Horizon Task Strategies
 
@@ -83,7 +85,7 @@ Claude can maintain notes outside the context window. Use STATE.md files, plan d
 
 ### Compaction management
 
-Auto-compaction triggers at approximately 95% context capacity. You can configure earlier compaction if needed. The key is ensuring your compaction instructions tell Claude what to preserve -- file lists, task progress, key decisions, and test results.
+By default auto-compaction triggers at the model's context limit (about 967K tokens on native-1M models). `/autocompact <tokens>` sets an earlier trigger. The key is ensuring your compaction instructions tell Claude what to preserve -- file lists, task progress, key decisions, and test results.
 
 ### Sub-agent architectures
 

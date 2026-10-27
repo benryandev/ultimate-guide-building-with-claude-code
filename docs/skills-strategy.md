@@ -17,7 +17,7 @@ description: One-line description of what this skill provides.
 Detailed knowledge, workflows, code examples, reference tables...
 ```
 
-**At session start:** Claude reads the `description` field from every skill in the project. This costs roughly one line of tokens per skill.
+**At session start:** Claude reads the `description` field from every skill in the project. The listing entry is the `description` plus `when_to_use`, capped at 1,536 characters per skill, and the whole listing is budgeted at 1% of the context window (descriptions of the least-used skills get dropped when it overflows). Keep each description short. Setting `disable-model-invocation: true` removes a skill from the listing, and `/skill-doctor` (v2.1.261) shows unused skills and their context cost.
 
 **On invocation:** When Claude determines it needs a skill (based on the description matching the current task), it reads the full SKILL.md content. This is when the full token cost is incurred.
 
@@ -28,11 +28,11 @@ Understanding the token cost of each layer is essential for efficient configurat
 | Layer | Token Cost | When Charged |
 |-------|-----------|--------------|
 | CLAUDE.md line | Every session | Always -- even when irrelevant |
-| Skill description | Every session | ~1 line per skill |
+| Skill description | Every session | One description per skill (keep it short) |
 | Skill full content | On invocation only | Only when Claude determines it is needed |
 | Supporting file | On explicit read only | Only when Claude reads the file |
 
-**The implication:** A 200-line section in CLAUDE.md costs 200 lines every session. That same content as a skill costs ~1 line per session plus 200 lines only when invoked. If Claude invokes that skill in 30% of sessions, you have saved 140 lines of context in 70% of sessions.
+**The implication:** A 200-line section in CLAUDE.md costs 200 lines every session. That same content as a skill costs one short description per session plus 200 lines only when invoked. If Claude invokes that skill in 30% of sessions, you have saved 140 lines of context in 70% of sessions.
 
 ## The Decision Criteria
 

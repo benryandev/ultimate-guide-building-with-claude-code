@@ -57,7 +57,7 @@ prevents collisions between plugins that ship same-named skills.
 
 Anthropic maintains two public marketplaces:
 
-- **`claude-plugins-official`** -- curated by Anthropic, registered automatically on first interactive launch.
+- **`claude-plugins-official`** -- curated by Anthropic, registered automatically on first interactive launch (not on a never-launched or scripted machine).
 - **`claude-community`** -- third-party submissions after review. Add it with `/plugin marketplace add anthropics/claude-plugins-community`.
 
 Plugins are enabled per-user in `~/.claude/settings.json`:
@@ -85,8 +85,8 @@ and run `/reload-plugins` after changes.
 
 ## Build or Install?
 
-The honest split from my own setup: **31 installed plugins alongside 24 hand-built
-pipeline skills.**
+The honest split from my own setup: **31 installed plugins alongside 26 hand-built
+pipeline skills** (plus 12 global skills).
 
 Everything generic is an installed plugin I don't maintain -- Playwright, frontend
 design, LSP servers, security scanning, CI templates. Everything specific to how I

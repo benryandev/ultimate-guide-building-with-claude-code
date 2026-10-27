@@ -13,12 +13,12 @@
 - Private repos by default when creating GitHub repos (`gh repo create --private`).
 
 ## Model Preferences
-- Agent Team lead: Opus 5
-- Agent Team teammates: Sonnet 5 by default
-- Escalate teammates to Opus 5 for: complex architecture, security-critical code, performance-sensitive implementations, intricate animation choreography, tasks requiring deep cross-codebase reasoning
-- Escalate to Fable 5 for: long autonomous sessions, ambiguous root-cause investigation, work I'd otherwise split across several sittings
-- Subagent for read-only exploration: Haiku 4.5 (fast, cheap)
-- Subagent for code changes: Sonnet 5 (default) or Opus 5 (complex)
+- Agent Team lead: Opus 5.5
+- Agent Team teammates: Sonnet 5.5 by default
+- Escalate teammates to Opus 5.5 for: complex architecture, security-critical code, performance-sensitive implementations, intricate animation choreography, tasks requiring deep cross-codebase reasoning
+- Escalate to Fable 5.1 for: long autonomous sessions, ambiguous root-cause investigation, work I'd otherwise split across several sittings
+- Subagent for read-only exploration: Haiku 5.5 (fast, cheap)
+- Subagent for code changes: Sonnet 5.5 (default) or Opus 5.5 (complex)
 - Name teammate models in the spawn prompt -- `teammateDefaultModel` was removed in v2.1.234
 
 ## Session Management

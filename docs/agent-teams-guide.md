@@ -20,7 +20,7 @@ settings:
 }
 ```
 
-Once enabled, describe the task and the teammates you want in plain language -- Claude spawns them and coordinates the work. There is no separate mode to switch into. (`Shift+Tab` cycles *permission* modes, not delegation; earlier versions of this guide called it "Delegate Mode", which was never a real feature.)
+Once enabled, describe the task and the teammates you want in plain language -- Claude spawns them and coordinates the work. There is no separate mode to switch into. (`Shift+Tab` cycles *permission* modes, not delegation; earlier versions of this guide called it "Delegate Mode", which was never a real feature.) While agent teams are enabled, Claude may also launch a subagent as a teammate unprompted; setting `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` reverts this.
 
 ## Choosing a Display Mode
 
@@ -35,14 +35,13 @@ and are opt-in via `teammateMode`:
 { "teammateMode": "in-process" }
 ```
 
-Valid values are `in-process` (default), `auto`, `tmux`, and `iterm2`. Before
-v2.1.179 the default was `auto`, which is why older setups opened split panes
-automatically and newer ones don't.
+Valid values are `in-process` (default), `auto`, `tmux`, and `iterm2`.
 
 > **Removed from this repo:** earlier versions shipped a `launch-team.sh` script that
-> killed and recreated a tmux session before launching Claude. It is obsolete. Team
-> directories are cleaned up automatically when the session ends, and in-process mode
-> needs no session management at all.
+> killed and recreated a tmux session before launching Claude. It is obsolete. The
+> team directory `~/.claude/teams/{name}/` is removed when the session ends (the
+> matching `~/.claude/tasks/{name}/` stays until `cleanupPeriodDays`), and in-process
+> mode needs no session management at all.
 
 ## Model Selection Strategy
 
@@ -50,26 +49,31 @@ Not every task needs the most powerful model. Matching models to task complexity
 
 | Model | Alias | Context | $/Mtok (in/out) |
 |-------|-------|---------|-----------------|
-| Claude Fable 5 | `fable` | 1M | $10 / $50 |
-| Claude Opus 5 | `opus` | 1M | $5 / $25 |
-| Claude Sonnet 5 | `sonnet` | 1M | $2 / $10 |
-| Claude Haiku 4.5 | `haiku` | 200K | $1 / $5 |
+| Claude Fable 5.1 | `fable` | 1M | $10 / $50 |
+| Claude Opus 5.5 | `opus` | 1M | $4 / $20 |
+| Claude Sonnet 5.5 | `sonnet` | 1M | $2 / $10 |
+| Claude Haiku 5.5 | `haiku` | 1M | $0.10 / $0.50 (rises to $0.50 / $2.50 for prompts over 100K tokens) |
+
+Fable 5, Opus 5, Sonnet 5 and Haiku 4.5 are now legacy, though still available. The `best` alias is Fable 5.1 where available, otherwise Opus 5.5. Aliases resolve to earlier versions on Bedrock, Google Cloud and Foundry.
 
 | Role | Model | Rationale |
 |------|-------|-----------|
-| **Team Lead** | **Opus 5** | Best reasoning, coordination, and synthesis. Handles complex task decomposition and quality assessment. |
-| **Teammate (default)** | **Sonnet 5** | Good balance of capability and cost for most implementation tasks. |
-| **Teammate (escalated)** | **Opus 5** | For highly technical tasks -- see escalation criteria below. |
-| **Teammate (long-running)** | **Fable 5** | Work that would otherwise span several sittings. Investigates before acting and verifies its own output. |
-| **Sub-agent (read-only/research)** | **Haiku 4.5** | Fast, cheap, sufficient for file search and codebase exploration. |
-| **Sub-agent (code changes)** | **Sonnet 5** | Default for implementation sub-agents. |
-| **Sub-agent (complex/critical)** | **Opus 5** | Security audits, architecture decisions, complex refactors. |
+| **Team Lead** | **Opus 5.5** | Best reasoning, coordination, and synthesis. Handles complex task decomposition and quality assessment. |
+| **Teammate (default)** | **Sonnet 5.5** | Good balance of capability and cost for most implementation tasks. |
+| **Teammate (escalated)** | **Opus 5.5** | For highly technical tasks -- see escalation criteria below. |
+| **Teammate (long-running)** | **Fable 5.1** | Work that would otherwise span several sittings. Anthropic describes it as built for demanding reasoning and long-horizon agentic work. |
+| **Sub-agent (read-only/research)** | **Haiku 5.5** | Fast, cheap, sufficient for file search and codebase exploration. |
+| **Sub-agent (code changes)** | **Sonnet 5.5** | Default for implementation sub-agents. |
+| **Sub-agent (complex/critical)** | **Opus 5.5** | Security audits, architecture decisions, complex refactors. |
 
 **How to set a teammate's model:** name it in the spawn prompt ("use Sonnet for each
 teammate"), or set `CLAUDE_CODE_SUBAGENT_MODEL`. The `teammateDefaultModel` setting
-was **removed in v2.1.234** and a leftover value is ignored. Teammates you don't
-specify a model for inherit the lead's model, and all teammates inherit the lead's
-effort level.
+was **removed in v2.1.234** and a leftover value is ignored. A teammate's model
+resolves in this order: the model named in the spawn prompt, then the agent
+definition's `model`, then `CLAUDE_CODE_SUBAGENT_MODEL`, then the lead's model.
+`CLAUDE_CODE_SUBAGENT_MODEL` is a default rather than an override (since v2.1.251);
+set `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` to force it (v2.1.257). All teammates
+inherit the lead's effort level.
 
 ### When to Escalate Teammates to Opus
 
@@ -145,7 +149,7 @@ Lead (Opus): Decomposes problem, assigns research vs implementation
 
 3. **Avoid file conflicts** -- each teammate should own distinct files. Two teammates editing the same file causes overwrites and lost work.
 
-4. **Give teammates rich context in spawn prompts** -- teammates do not inherit the lead's conversation history. They only have access to project CLAUDE.md and skills. Include relevant decisions, constraints, and design specifications in the spawn prompt.
+4. **Give teammates rich context in spawn prompts** -- teammates do not inherit the lead's conversation history. They do load project CLAUDE.md, skills and MCP servers (and respect `--setting-sources`). Include relevant decisions, constraints, and design specifications in the spawn prompt.
 
 5. **Require plan approval for risky tasks** -- for tasks that could have significant architectural impact, instruct the teammate to present a plan before making changes.
 
@@ -157,7 +161,7 @@ Lead (Opus): Decomposes problem, assigns research vs implementation
 
 1. **Always preload relevant skills** via the `skills:` field when creating custom sub-agents. This is the single highest-leverage improvement for sub-agent quality.
 
-   **Caveat:** the `skills:` and `mcpServers:` frontmatter fields are **not applied when a subagent definition runs as a teammate**. Teammates load skills and MCP servers from project and user settings like a normal session. If a role depends on preloaded skills, run it as a subagent, not a teammate.
+   **Caveat:** the `skills:` frontmatter field is **not applied when a subagent definition runs as a teammate**, and `mcpServers:` is ignored only for in-process teammates (split-pane teammates apply it). Teammates load skills and MCP servers from project and user settings like a normal session. If a role depends on preloaded skills, run it as a subagent, not a teammate.
 
 2. **Use persistent memory** (`memory: user` or `memory: project`) for sub-agents that run repeatedly -- they build knowledge over time.
 

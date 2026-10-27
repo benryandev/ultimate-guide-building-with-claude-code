@@ -123,7 +123,7 @@ After capturing screenshots, Claude analyses them using design review skills. Th
 This is where Agent Teams excel. The lead can coordinate parallel capture and review across multiple pages:
 
 ```
-Lead (Opus 5):
+Lead (Opus 5.5):
   1. Assigns pages/sections to teammates
   2. Each teammate captures screenshots via Playwright Plus MCP
   3. Each teammate runs design analysis

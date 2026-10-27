@@ -10,14 +10,14 @@ Claude Code's memory system has ten distinct layers, ordered from broadest scope
 
 | Layer | Location | When Loaded | Audience | Use For |
 |-------|----------|-------------|----------|---------|
-| **Managed policy** | `/Library/Application Support/ClaudeCode/CLAUDE.md` | Every session, every project | Whole organisation | IT-deployed standards. Cannot be excluded by user settings |
+| **Managed policy** | macOS `/Library/Application Support/ClaudeCode/CLAUDE.md`; Linux/WSL `/etc/claude-code/CLAUDE.md`; Windows `C:\Program Files\ClaudeCode\CLAUDE.md` | Every session, every project | Whole organisation | IT-deployed standards. Cannot be excluded by user settings |
 | **Global** | `~/.claude/CLAUDE.md` | Every session, every project | You only | Personal identity, cross-project preferences, model preferences |
 | **Global Rules** | `~/.claude/rules/*.md` | Every session, every project | You only | Modular cross-project rules (e.g., `nextjs.md`, `git.md`) |
 | **Project** | `./CLAUDE.md` or `.claude/CLAUDE.md` | Every session in this project | Team (git) | Project-specific stack, commands, architecture, conventions |
 | **Project Rules** | `.claude/rules/*.md` | Every session in this project | Team (git) | Rules with no `paths:` frontmatter -- always loaded |
-| **Path-scoped Rules** | `.claude/rules/*.md` with `paths:` | Only when Claude reads a matching file | Team (git) | File-type-specific rules |
+| **Path-scoped Rules** | `.claude/rules/*.md` with `paths:` | When Claude reads, writes or edits a matching file, or views it via Bash | Team (git) | File-type-specific rules |
 | **Project Local** | `./CLAUDE.local.md` | Every session in this project | You only (.gitignored) | Personal overrides, sandbox URLs, environment notes |
-| **Child Directory** | `./packages/foo/CLAUDE.md` | On demand (when Claude reads files in that directory) | Team (git) | Package-specific rules in monorepos |
+| **Child Directory** | `./packages/foo/CLAUDE.md` | On demand (when Claude reads, writes or edits files in that directory) | Team (git) | Package-specific rules in monorepos |
 | **Auto Memory** | `~/.claude/projects/<id>/memory/MEMORY.md` | First 200 lines **or** 25KB, whichever comes first | Auto (Claude writes) | Claude's own notes, debugging insights, pattern learnings |
 | **Skills** | `.claude/skills/<name>/SKILL.md` | Description at session start; full content on invocation | Team (git) | On-demand domain knowledge, workflows, reference material |
 
@@ -26,7 +26,7 @@ Claude Code's memory system has ten distinct layers, ordered from broadest scope
 The critical distinction is between **always-on** and **on-demand** context:
 
 - **Always-on layers** (Managed policy, Global, Global Rules, Project, Project Rules, Project Local) load every session. Every line consumes tokens whether Claude needs it or not.
-- **On-demand layers** (Path-scoped Rules, Child Directory, Skills) load only when triggered. A skill description costs roughly one line per session -- the full content loads only when invoked.
+- **On-demand layers** (Path-scoped Rules, Child Directory, Skills) load only when triggered. A skill costs one short description per session -- the full content loads only when invoked.
 - **Auto Memory** is a hybrid: the first 200 lines or 25KB load automatically, but Claude controls what goes there.
 
 ### Rules gotchas worth knowing
@@ -48,7 +48,7 @@ The issue is still open for two narrower traps, and both are easy to hit:
    rule enters context even when the rule never matches. Avoid imports in rules --
    duplicate the handful of lines instead.
 
-This means a 100-line CLAUDE.md costs 100 lines of context every single session. A 100-line skill costs approximately one line per session plus the full 100 lines only when invoked. For reference material that Claude needs occasionally, skills are dramatically more efficient.
+This means a 100-line CLAUDE.md costs 100 lines of context every single session. A 100-line skill costs one short description per session plus the full 100 lines only when invoked. For reference material that Claude needs occasionally, skills are dramatically more efficient.
 
 ## The 7 Golden Rules of CLAUDE.md
 
@@ -64,7 +64,9 @@ If Claude keeps doing something you have a rule against, the file is probably to
 long. `/doctor` proposes trims for a checked-in CLAUDE.md: it cuts what Claude can
 derive from the codebase -- directory layouts, dependency lists, architecture
 overviews -- and keeps the pitfalls, rationale, and conventions that differ from
-tool defaults.
+tool defaults. `/doctor prompt-audit` (v2.1.283) goes further: it audits CLAUDE.md, rules, skills, agents and commands for stale paths and contradictions, and proposes edits without making them.
+
+If no `CLAUDE.md` or `CLAUDE.local.md` exists at or above the working directory, Claude Code reads `AGENTS.md` instead (v2.1.277).
 
 ### 2. Only include what Claude cannot infer from code
 
