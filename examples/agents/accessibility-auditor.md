@@ -1,6 +1,8 @@
 ---
 name: accessibility-auditor
 description: Audit pages for WCAG 2.1 AA compliance using automated and manual checks
+tools: Read, Grep, Glob, mcp__playwright-plus__browser_navigate, mcp__playwright-plus__browser_snapshot, mcp__playwright-plus__browser_take_screenshot
+model: sonnet
 ---
 
 # Accessibility Auditor

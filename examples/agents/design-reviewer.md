@@ -1,6 +1,8 @@
 ---
 name: design-reviewer
 description: Review UI designs using Playwright screenshots and structured design analysis
+tools: Read, Grep, Glob, mcp__playwright-plus__browser_navigate, mcp__playwright-plus__browser_resize, mcp__playwright-plus__browser_take_screenshot
+model: sonnet
 ---
 
 # Design Reviewer

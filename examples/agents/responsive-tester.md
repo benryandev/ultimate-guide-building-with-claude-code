@@ -1,6 +1,8 @@
 ---
 name: responsive-tester
 description: Test responsive design across all breakpoints and report layout issues
+tools: Read, Grep, Glob, mcp__playwright-plus__browser_navigate, mcp__playwright-plus__browser_resize, mcp__playwright-plus__browser_take_screenshot
+model: sonnet
 ---
 
 # Responsive Tester

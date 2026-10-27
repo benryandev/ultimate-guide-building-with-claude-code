@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path' | xargs -r npx prettier --write --ignore-unknown"
+            "command": "jq -r '.tool_input.file_path // empty' | xargs -r -I{} npx prettier --write --ignore-unknown {}"
           }
         ]
       }

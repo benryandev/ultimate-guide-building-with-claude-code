@@ -10,7 +10,14 @@
 
 1. Merge the `hooks` object from `settings-hooks.json` into your `.claude/settings.json`.
 2. Copy `block-destructive.sh` to `.claude/hooks/` and make it executable.
-3. Ask Claude to run `rm -rf /tmp/something`. The hook denies it and shows the reason.
+3. Test the hook directly rather than asking Claude to run something destructive -- if the
+   hook were miswired, the command would really run:
+
+   ```bash
+   echo '{"tool_input":{"command":"rm -rf ~"}}' | .claude/hooks/block-destructive.sh
+   ```
+
+   It prints a `deny` decision. `git push --force-with-lease` and `rm -rf ./dist` pass through.
 
 Run `claude --debug` to see which hooks matched and how they exited.
 
